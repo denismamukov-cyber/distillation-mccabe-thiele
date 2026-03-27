@@ -1,84 +1,52 @@
 # Distillation McCabe–Thiele Calculator
 
-Прототип программы для автоматизации технологического расчета ректификационной колонны
-(баланс, число теоретических тарелок по МакКэбу–Тили, упрощенный гидравлический расчет, подбор диаметра)
-с генерацией подробного отчета в TXT/HTML/PDF.
+Теперь проект поддерживает **два режима расчета**:
 
-## Что умеет
+1. `dytnersky` (по умолчанию) — расширенный порядок расчета по структуре блоков Дытнерского (на основе вашей вариации).
+2. `prototype` — упрощенный шаблонный расчет (старый режим).
 
-- Принимает исходные данные из JSON.
-- Выполняет:
-  - материальный баланс (F, D, B);
-  - оценку `R_min` (упрощенно), выбор рабочего флегмового числа;
-  - расчет `N_min` по Фенске;
-  - пошаговый расчет тарелок методом МакКэба–Тили (численно);
-  - упрощенный расчет диаметра колонны по допустимой скорости пара.
-- Формирует отчет:
-  - `report.txt` (подробный, с подстановкой чисел);
-  - `report.html` (с LaTeX-формулами для MathJax);
-  - `report.pdf` (если установлен `weasyprint`).
+## Запуск локально
 
-> ⚠️ Важно: чтобы формулы совпали **строго** с вашим Mathcad Prime 10, замените/уточните формулы в `src/calculations.py` согласно вашему методическому расчету.
-
-## Как запустить локально
+### Режим Дытнерского (рекомендуется)
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-python cli.py --input examples/input.json --output-dir out
+python cli.py --method dytnersky --input examples/input.json --output-dir out
 ```
 
-После выполнения появятся файлы:
-- `out/report.txt`
-- `out/report.html`
-- `out/report.pdf` (только если доступен `weasyprint`)
+Результаты:
+- `out/report_dytnersky.txt`
+- `out/result_dytnersky.json`
+- графики `plot_NR1.png`, `plot_yx_mccabe.png`
 
-## Как запустить код на GitHub
-
-### Вариант 1: GitHub Actions (автоматически)
-
-В репозитории добавлен workflow `.github/workflows/ci.yml`.
-Он запускается на каждый `push` и `pull_request`, выполняет:
+### Упрощенный режим
 
 ```bash
-python cli.py --input examples/input.json --output-dir out
+python cli.py --method prototype --input examples/input_prototype.json --output-dir out
 ```
 
-И загружает результаты из папки `out/` как артефакт `distillation-report`.
+## Входные данные
 
-Как посмотреть результат:
-1. Откройте вкладку **Actions** в вашем репозитории.
-2. Выберите последний запуск workflow **ci**.
-3. Скачайте артефакт **distillation-report**.
+### `dytnersky`
 
-### Вариант 2: Через Codespaces в браузере
-
-1. На странице репозитория нажмите **Code → Codespaces → Create codespace**.
-2. В терминале Codespaces выполните:
-
-```bash
-python cli.py --input examples/input.json --output-dir out
+```json
+{
+  "g_feed_kg_h": 12000.0,
+  "xf_mass": 0.325,
+  "xp_mass": 0.97,
+  "xw_mass": 0.012
+}
 ```
 
-3. Откройте папку `out` и скачайте отчеты.
+### `prototype`
 
-## Формат входных данных
+Старый формат параметров сохранен; пример в `examples/input_prototype.json`.
 
-См. `examples/input.json`.
+## Запуск на GitHub
 
-Ключевые параметры:
+В workflow `.github/workflows/ci.yml` добавлен запуск режима `dytnersky`.
+Артефакт `distillation-report` содержит файлы из директории `out/`.
 
-- `feed_flow_kmol_h` — расход питания F, кмоль/ч
-- `feed_composition_light` — состав легколетучего в питании zF
-- `distillate_composition_light` — состав легколетучего в дистилляте xD
-- `bottoms_composition_light` — состав легколетучего в кубовом остатке xB
-- `relative_volatility` — относительная летучесть α
-- `reflux_ratio_factor_to_rmin` — множитель к Rmin (например, 1.3…1.8)
-- `feed_thermal_condition_q` — тепловое состояние питания q
-- `vapor_density_kg_m3` — плотность пара для гидравлики
-- `souders_brown_factor_m_s` — допустимая скорость пара
+## Что важно
 
-## Примечание по PDF
-
-`report.pdf` создается, если установлен пакет `weasyprint` и его системные зависимости.
-Если библиотека недоступна, программа завершится успешно и оставит TXT/HTML.
+- В коде перенесены порядок и ключевые формулы из вашего скрипта (матбаланс, подбор `R`, нагрузки, диаметр, гидравлика, эффективность и расчет действительных тарелок).
+- Для интерполяции используется `scipy` при наличии; если `scipy` недоступен — включается fallback на линейную интерполяцию `numpy`.

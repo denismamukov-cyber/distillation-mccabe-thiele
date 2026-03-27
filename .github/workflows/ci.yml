@@ -17,9 +17,14 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Run example calculation
+      - name: Install deps
         run: |
-          python cli.py --input examples/input.json --output-dir out
+          python -m pip install --upgrade pip
+          pip install numpy matplotlib scipy
+
+      - name: Run Dytnersky calculation
+        run: |
+          python cli.py --method dytnersky --input examples/input.json --output-dir out
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
