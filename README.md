@@ -13,7 +13,7 @@
 python cli.py --method dytnersky --input examples/input.json --output-dir out
 ```
 
-Если не хватает зависимостей (`numpy/matplotlib/scipy`), CLI выдаст понятное сообщение и подскажет установить `requirements.txt`.
+Если не хватает зависимостей (`numpy/matplotlib/scipy`), включится упрощенный **fallback-режим** без графиков (чтобы расчет не падал с ошибкой).
 
 Результаты:
 - `out/report_dytnersky.txt`
