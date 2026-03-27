@@ -20,14 +20,47 @@
 
 > ⚠️ Важно: чтобы формулы совпали **строго** с вашим Mathcad Prime 10, замените/уточните формулы в `src/calculations.py` согласно вашему методическому расчету.
 
-## Быстрый старт
+## Как запустить локально
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
 python cli.py --input examples/input.json --output-dir out
 ```
+
+После выполнения появятся файлы:
+- `out/report.txt`
+- `out/report.html`
+- `out/report.pdf` (только если доступен `weasyprint`)
+
+## Как запустить код на GitHub
+
+### Вариант 1: GitHub Actions (автоматически)
+
+В репозитории добавлен workflow `.github/workflows/ci.yml`.
+Он запускается на каждый `push` и `pull_request`, выполняет:
+
+```bash
+python cli.py --input examples/input.json --output-dir out
+```
+
+И загружает результаты из папки `out/` как артефакт `distillation-report`.
+
+Как посмотреть результат:
+1. Откройте вкладку **Actions** в вашем репозитории.
+2. Выберите последний запуск workflow **ci**.
+3. Скачайте артефакт **distillation-report**.
+
+### Вариант 2: Через Codespaces в браузере
+
+1. На странице репозитория нажмите **Code → Codespaces → Create codespace**.
+2. В терминале Codespaces выполните:
+
+```bash
+python cli.py --input examples/input.json --output-dir out
+```
+
+3. Откройте папку `out` и скачайте отчеты.
 
 ## Формат входных данных
 
@@ -42,7 +75,7 @@ python cli.py --input examples/input.json --output-dir out
 - `relative_volatility` — относительная летучесть α
 - `reflux_ratio_factor_to_rmin` — множитель к Rmin (например, 1.3…1.8)
 - `feed_thermal_condition_q` — тепловое состояние питания q
-- `molar_mass_vapor_kg_kmol`, `vapor_density_kg_m3` — параметры для гидравлики
+- `vapor_density_kg_m3` — плотность пара для гидравлики
 - `souders_brown_factor_m_s` — допустимая скорость пара
 
 ## Примечание по PDF
