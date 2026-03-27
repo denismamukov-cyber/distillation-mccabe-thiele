@@ -1,0 +1,11 @@
+{
+  "feed_flow_kmol_h": 100.0,
+  "feed_composition_light": 0.45,
+  "distillate_composition_light": 0.95,
+  "bottoms_composition_light": 0.05,
+  "relative_volatility": 2.4,
+  "reflux_ratio_factor_to_rmin": 1.5,
+  "feed_thermal_condition_q": 1.0,
+  "vapor_density_kg_m3": 1.6,
+  "souders_brown_factor_m_s": 1.0
+}

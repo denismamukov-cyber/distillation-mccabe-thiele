@@ -1,0 +1,2 @@
+# Optional dependency for PDF generation:
+# weasyprint>=62.0
