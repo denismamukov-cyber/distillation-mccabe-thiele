@@ -13,6 +13,8 @@
 python cli.py --method dytnersky --input examples/input.json --output-dir out
 ```
 
+Если не хватает зависимостей (`numpy/matplotlib/scipy`), CLI выдаст понятное сообщение и подскажет установить `requirements.txt`.
+
 Результаты:
 - `out/report_dytnersky.txt`
 - `out/report_dytnersky.html`
@@ -51,3 +53,9 @@ python cli.py --method prototype --input examples/input_prototype.json --output-
 
 - В коде перенесены порядок и ключевые формулы из вашего скрипта (матбаланс, подбор `R`, нагрузки, диаметр, гидравлика, эффективность и расчет действительных тарелок).
 - Для интерполяции используется `scipy` при наличии; если `scipy` недоступен — включается fallback на линейную интерполяцию `numpy`.
+
+## Минимальные проверки
+
+```bash
+python -m unittest tests/test_calculations.py
+```

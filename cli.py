@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from src.calculations import InputData, calculate
@@ -40,7 +41,12 @@ def main() -> None:
         print(f"PDF:  {paths['pdf'] if paths['pdf'] else 'не создан (weasyprint недоступен)'}")
     else:
         model = DytnerskyInput(**data)
-        result = run_dytnersky(model, output_dir=output_dir)
+        try:
+            result = run_dytnersky(model, output_dir=output_dir)
+        except RuntimeError as exc:
+            print(f"Ошибка запуска dytnersky: {exc}")
+            print("Подсказка: установите зависимости из requirements.txt и повторите запуск.")
+            sys.exit(2)
         print("Расчет завершен (dytnersky).")
         print(f"TXT:  {output_dir / 'report_dytnersky.txt'}")
         print(f"HTML: {output_dir / 'report_dytnersky.html'}")

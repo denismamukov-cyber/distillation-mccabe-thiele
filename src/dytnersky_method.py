@@ -11,7 +11,13 @@ def _fmt(v: float) -> str:
 
 
 def _lazy_imports():
-    import numpy as np
+    try:
+        import numpy as np
+    except ModuleNotFoundError as exc:
+        raise RuntimeError(
+            "Для режима dytnersky требуется пакет numpy. "
+            "Установите зависимости: pip install -r requirements.txt"
+        ) from exc
 
     try:
         import matplotlib
