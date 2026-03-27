@@ -43,6 +43,7 @@ def main() -> None:
         result = run_dytnersky(model, output_dir=output_dir)
         print("Расчет завершен (dytnersky).")
         print(f"TXT:  {output_dir / 'report_dytnersky.txt'}")
+        print(f"HTML: {output_dir / 'report_dytnersky.html'}")
         print(f"JSON: {output_dir / 'result_dytnersky.json'}")
         print(f"N_total = {result['N_total']}, H = {result['H_column_m']:.3f} м")
 
