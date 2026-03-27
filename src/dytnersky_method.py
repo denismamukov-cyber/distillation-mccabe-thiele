@@ -522,10 +522,13 @@ def run_dytnersky(input_data: DytnerskyInput, output_dir: Path) -> dict[str, Any
         f"  beta_opt = {_fmt(B_opt)}, R_opt = {_fmt(R_opt)}, N_theor = {_fmt(N_opt)}",
         "",
         "БЛОК 3 — Нагрузки, температуры, плотности",
+        "  Mp = M1*xp + M2*(1-xp), MF = M1*xf + M2*(1-xf), Mv/Mn/M'v/M'n аналогично",
+        f"  Mp={_fmt(Mp)}, MF={_fmt(MF)}, Mv={_fmt(Mv)}, Mn={_fmt(Mn)}, M'v={_fmt(Mv_prime)}, M'n={_fmt(Mn_prime)} кг/кмоль",
         "  Lв = D*R*Mv/Mp; Lн = D*R*Mn/Mp + F*Mn/MF",
         f"  Lв={_fmt(Lv)} кг/с; Lн={_fmt(Ln)} кг/с",
         "  Gв = D*(R+1)*M'в/Mp; Gн = D*(R+1)*M'н/Mp",
         f"  Gв={_fmt(Gv)} кг/с; Gн={_fmt(Gn)} кг/с",
+        "  rho_y = M'/22.4 * 273/(273+t'), rho_x — смешение по компонентам",
         f"  t'в={_fmt(t_vap_v)} °C; t'н={_fmt(t_vap_n)} °C; tв={_fmt(t_liq_v)} °C; tн={_fmt(t_liq_n)} °C",
         f"  rho_yв={_fmt(rho_yv)}; rho_yн={_fmt(rho_yn)}; rho_xв={_fmt(rho_xv)}; rho_xн={_fmt(rho_xn)} кг/м³",
         f"  mu_xв={_fmt(mu_xv)}; mu_xн={_fmt(mu_xn)}; mu_yв={_fmt(mu_yv)}; mu_yн={_fmt(mu_yn)} мПа·с",
@@ -534,6 +537,7 @@ def run_dytnersky(input_data: DytnerskyInput, output_dir: Path) -> dict[str, Any
         "  w = 0.05*sqrt(rho_x/rho_y)",
         f"  wв={_fmt(w_v)} м/с; wн={_fmt(w_n)} м/с; w_avg={_fmt(w_avg)} м/с",
         "  d = sqrt(4*G_avg/(pi*w_avg*rho_avg))",
+        f"  G_avg={_fmt(G_avg)} кг/с; rho_avg={_fmt(rho_avg)} кг/м³",
         f"  d_calc={_fmt(d_calc)} м; принято d_col={_fmt(d_col)} м",
         f"  w_work={_fmt(w_work)} м/с; w_tray={_fmt(w_tray)} м/с",
         "",
@@ -547,18 +551,22 @@ def run_dytnersky(input_data: DytnerskyInput, output_dir: Path) -> dict[str, Any
         "БЛОК 6 — Коэффициенты молекулярной диффузии",
         "  Dx20 = 1e-6*sqrt(1/M1+1/M2)/(mu*(nu1^(1/3)+nu2^(1/3))^2)",
         f"  Dx20в={_fmt(Dx20_v)}; Dx20н={_fmt(Dx20_n)}",
+        f"  bв={_fmt(b_vc)}; bн={_fmt(b_nc)}",
         "  Dx = Dx20*(1+b*(t-20)); Dy = 4.22e-2*T^1.5*sqrt(1/M1+1/M2)/(P*(nu1^(1/3)+nu2^(1/3))^2)",
         f"  Dxв={_fmt(Dx_v)}; Dxн={_fmt(Dx_n)}; Dyв={_fmt(Dy_v)}; Dyн={_fmt(Dy_n)}",
         "",
         "БЛОК 7 — Коэффициенты массоотдачи",
         "  beta_xf, beta_yf по корреляциям Дытнерского",
+        f"  Uв={_fmt(U_v)} м/с; Uн={_fmt(U_n)} м/с",
         f"  bxfв={_fmt(bxf_v_ms)} м/с; bxfн={_fmt(bxf_n_ms)} м/с; byfв={_fmt(byf_v_ms)} м/с; byfн={_fmt(byf_n_ms)} м/с",
         f"  bxfв={_fmt(bxf_v)}; bxfн={_fmt(bxf_n)}; byfв={_fmt(byf_v)}; byfн={_fmt(byf_n)} кмоль/(м²·с)",
         "",
         "БЛОК 8 — Эффективность по Мэрфри и кинетическая линия",
         "  m' = 1.15e-3*(sigma/rho_y)^0.295*((rho_x-rho_y)/mu_y)^0.425",
         f"  m'в={_fmt(m_prime_v)}; m'н={_fmt(m_prime_n)}; Hcв={_fmt(Hc_v)} м; Hcн={_fmt(Hc_n)} м",
+        f"  arg_eв={_fmt(w_tray / (m_prime_v * Hc_v))}; arg_eн={_fmt(w_tray / (m_prime_n * Hc_n))}",
         f"  eв={_fmt(e_v)}; eн={_fmt(e_n)}; mean(EMy)={_fmt(float(np.mean(EMy_all)))}",
+        "  Для каждой точки x_i считалось: m(x_i), Kyf, n_oy, Ey, EMy и y_k = y_in + EMy*(y*-y_in)",
         "",
         "БЛОК 9 — Число действительных тарелок",
         f"  Nв={N_top}; Nн={N_bot}; N={N_total}",
@@ -578,6 +586,8 @@ def run_dytnersky(input_data: DytnerskyInput, output_dir: Path) -> dict[str, Any
         "Графики: plot_NR1.png, plot_yx_mccabe.png, plot_txy.png, plot_entrainment.png, plot_kinetic.png",
     ]
     (output_dir / "report_dytnersky.txt").write_text("\n".join(text_lines) + "\n", encoding="utf-8")
+
+    report_pre = "\\n".join(text_lines)
 
     html = f"""<!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><title>Отчет Дытнерского</title>
@@ -629,6 +639,8 @@ h2{{margin-top:28px}}
 <div class="eq"><p>$R={_fmt(R_opt)},\\;N_{{theor}}={_fmt(N_opt)},\\;N_{{actual}}={N_total},\\;d={_fmt(d_col)}\\;\\text{{м}},\\;H={_fmt(Hk)}\\;\\text{{м}}$</p></div>
 <h2>Графики</h2>
 <ul><li>plot_NR1.png</li><li>plot_yx_mccabe.png</li><li>plot_txy.png</li><li>plot_entrainment.png</li><li>plot_kinetic.png</li></ul>
+<h2>Полный протокол расчета (текстовый дубль)</h2>
+<pre>{report_pre}</pre>
 </body></html>"""
     (output_dir / "report_dytnersky.html").write_text(html, encoding="utf-8")
     (output_dir / "result_dytnersky.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
