@@ -366,6 +366,21 @@ def run_dytnersky(input_data: DytnerskyInput, output_dir: Path) -> dict[str, Any
     fig.savefig(output_dir / "plot_entrainment.png", dpi=120)
     plt.close(fig)
 
+    fig, ax = plt.subplots(figsize=(6, 6))
+    x_diag = np.linspace(0, 1, 300)
+    ax.plot(x_eq, y_eq, "b-", lw=2, label="Равновесная")
+    ax.plot(x_diag, x_diag, "k--", lw=1, label="Диагональ")
+    ax.plot(x_kin_full, y_kin_full, "c-", lw=2, label="Кинетическая")
+    ax.plot(np.linspace(xf, xp, 200), rect(np.linspace(xf, xp, 200)), "g-", lw=1.2, label="Укрепляющая")
+    ax.plot(np.linspace(xw, xf, 200), strip(np.linspace(xw, xf, 200)), "m-", lw=1.2, label="Исчерпывающая")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.grid(alpha=0.4)
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    fig.savefig(output_dir / "plot_kinetic.png", dpi=120)
+    plt.close(fig)
+
     result = {
         "input": asdict(input_data),
         "xf_mol": xf,
@@ -385,6 +400,13 @@ def run_dytnersky(input_data: DytnerskyInput, output_dir: Path) -> dict[str, Any
         "N_total": int(N_total),
         "H_column_m": float(Hk),
         "dP_total_Pa": float(dP_total),
+        "plots": [
+            "plot_NR1.png",
+            "plot_yx_mccabe.png",
+            "plot_txy.png",
+            "plot_entrainment.png",
+            "plot_kinetic.png",
+        ],
     }
 
     text_lines = [
@@ -406,15 +428,23 @@ def run_dytnersky(input_data: DytnerskyInput, output_dir: Path) -> dict[str, Any
         f"  d_calc={_fmt(d_calc)} м; d_col={_fmt(d_col)} м; w_work={_fmt(w_work)} м/с",
         "БЛОК 5 — Параметры тарелки",
         f"  h0в={_fmt(h0_v)} м; h0н={_fmt(h0_n)} м; epsв={_fmt(eps_v)}; epsн={_fmt(eps_n)}; S={S_int}",
-        "БЛОК 6–8 — Диффузия, массоотдача, эффективность",
+        "БЛОК 6 — Коэффициенты молекулярной диффузии",
         f"  Dxв={_fmt(Dx_v)}; Dxн={_fmt(Dx_n)}; Dyв={_fmt(Dy_v)}; Dyн={_fmt(Dy_n)}",
+        "БЛОК 7 — Коэффициенты массоотдачи",
         f"  bxfв={_fmt(bxf_v)}; byfв={_fmt(byf_v)}; bxfн={_fmt(bxf_n)}; byfн={_fmt(byf_n)}",
+        "БЛОК 8 — Эффективность по Мэрфри",
         f"  eв={_fmt(e_v)}; eн={_fmt(e_n)}",
-        "БЛОК 9–11 — Тарелки, высота, гидросопротивление",
+        "БЛОК 9 — Число действительных тарелок",
+        f"  Nв={N_top}; Nн={N_bot}; N={N_total}",
+        "БЛОК 10 — Высота колонны",
+        f"  Hк={_fmt(Hk)} м",
+        "БЛОК 11 — Гидравлическое сопротивление",
+        f"  dPк={_fmt(dP_total)} Па",
+        "БЛОК 9–11 — Сводка",
         f"  Nв={N_top}; Nн={N_bot}; N={N_total}; Hк={_fmt(Hk)} м; dPк={_fmt(dP_total)} Па",
         "БЛОК 12 — Итог",
         f"  R={_fmt(R_opt)}; Nтеор={_fmt(N_opt)}; Nдейств={N_total}; d={_fmt(d_col)} м",
-        "Графики: plot_NR1.png, plot_yx_mccabe.png, plot_txy.png, plot_entrainment.png",
+        "Графики: plot_NR1.png, plot_yx_mccabe.png, plot_txy.png, plot_entrainment.png, plot_kinetic.png",
     ]
     (output_dir / "report_dytnersky.txt").write_text("\n".join(text_lines) + "\n", encoding="utf-8")
 
@@ -424,17 +454,26 @@ def run_dytnersky(input_data: DytnerskyInput, output_dir: Path) -> dict[str, Any
 <script>window.MathJax={{tex:{{inlineMath:[['$','$'],['\\\\(','\\\\)']]}}}};</script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body>
 <h1>Расчёт тарельчатой ректификационной колонны</h1>
+<h2>Блок 0. Исходные данные</h2>
+<p>F = {_fmt(Gf_kgh)} кг/ч; $x_f^{{mass}}={_fmt(xf_mass)}$, $x_p^{{mass}}={_fmt(xp_mass)}$, $x_w^{{mass}}={_fmt(xw_mass)}$.</p>
 <h2>Блок 1. Материальный баланс</h2>
 <p>$W = F\\frac{{x_p-x_f}}{{x_p-x_w}},\\ D = F-W$</p>
 <p>$W={_fmt(Gf)}\\cdot\\frac{{{_fmt(xp)}-{_fmt(xf)}}}{{{_fmt(xp)}-{_fmt(xw)}}}={_fmt(W)}$ кг/с; $D={_fmt(D)}$ кг/с</p>
 <h2>Блок 2. Выбор флегмового числа</h2>
 <p>$R_{{min}}=\\frac{{x_p-y_f^*}}{{y_f^*-x_f}}={_fmt(Rmin)}$, $R={_fmt(R_opt)}$</p>
+<h2>Блок 3. Нагрузки и свойства</h2>
+<p>$L_в={_fmt(Lv)}$, $L_н={_fmt(Ln)}$, $G_в={_fmt(Gv)}$, $G_н={_fmt(Gn)}$ кг/с.</p>
 <h2>Блок 4. Диаметр</h2>
 <p>$d=\\sqrt{{\\frac{{4\\bar{{G}}}}{{\\pi\\bar{{w}}\\bar{{\\rho}}}}}}={_fmt(d_calc)}$ м; принято $d={_fmt(d_col)}$ м</p>
+<h2>Блок 5. Параметры тарелки</h2>
+<p>$h_0^в={_fmt(h0_v)}$ м, $h_0^н={_fmt(h0_n)}$ м, $\\varepsilon_в={_fmt(eps_v)}$, $\\varepsilon_н={_fmt(eps_n)}$.</p>
+<h2>Блок 6–8. Массообмен</h2>
+<p>$D_x^в={_fmt(Dx_v)}$, $D_x^н={_fmt(Dx_n)}$, $D_y^в={_fmt(Dy_v)}$, $D_y^н={_fmt(Dy_n)}$.</p>
+<p>$e_в={_fmt(e_v)}$, $e_н={_fmt(e_n)}$.</p>
 <h2>Блок 9–11. Итог</h2>
 <p>$N_в={N_top}$, $N_н={N_bot}$, $N={N_total}$, $H_к={_fmt(Hk)}$ м, $\\Delta P_к={_fmt(dP_total)}$ Па</p>
 <h2>Файлы графиков</h2>
-<ul><li>plot_NR1.png</li><li>plot_yx_mccabe.png</li><li>plot_txy.png</li><li>plot_entrainment.png</li></ul>
+<ul><li>plot_NR1.png</li><li>plot_yx_mccabe.png</li><li>plot_txy.png</li><li>plot_entrainment.png</li><li>plot_kinetic.png</li></ul>
 </body></html>"""
     (output_dir / "report_dytnersky.html").write_text(html, encoding="utf-8")
     (output_dir / "result_dytnersky.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")

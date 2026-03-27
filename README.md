@@ -17,7 +17,7 @@ python cli.py --method dytnersky --input examples/input.json --output-dir out
 - `out/report_dytnersky.txt`
 - `out/report_dytnersky.html`
 - `out/result_dytnersky.json`
-- графики `plot_NR1.png`, `plot_yx_mccabe.png`, `plot_txy.png`, `plot_entrainment.png`
+- графики `plot_NR1.png`, `plot_yx_mccabe.png`, `plot_txy.png`, `plot_entrainment.png`, `plot_kinetic.png`
 
 ### Упрощенный режим
 
