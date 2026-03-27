@@ -500,66 +500,134 @@ def run_dytnersky(input_data: DytnerskyInput, output_dir: Path) -> dict[str, Any
         "==============================================================================",
         "  РАСЧЁТ ТАРЕЛЬЧАТОЙ РЕКТИФИКАЦИОННОЙ КОЛОННЫ (метод Дытнерского)",
         "==============================================================================",
+        "",
         "БЛОК 0 — Исходные данные",
-        f"  F = {Gf_kgh} кг/ч; xf_mass={xf_mass}; xp_mass={xp_mass}; xw_mass={xw_mass}",
+        f"  F = {Gf_kgh} кг/ч = {_fmt(Gf)} кг/с",
+        f"  x_f^mass = {_fmt(xf_mass)}, x_p^mass = {_fmt(xp_mass)}, x_w^mass = {_fmt(xw_mass)}",
+        f"  M1={M1} кг/кмоль, M2={M2} кг/кмоль, d_col={d_col} м, H_tray={H_tray} м",
+        "",
         "БЛОК 1 — Материальный баланс",
-        "  Формулы: W = F*(xp-xf)/(xp-xw), D = F-W",
-        f"  Подстановка: W = {_fmt(Gf)}*({_fmt(xp)}-{_fmt(xf)})/({_fmt(xp)}-{_fmt(xw)}) = {_fmt(W)} кг/с",
+        "  x = (x_mass/M1) / (x_mass/M1 + (1-x_mass)/M2)",
+        f"  x_f = {_fmt(xf)}, x_p = {_fmt(xp)}, x_w = {_fmt(xw)}",
+        "  W = F*(x_p-x_f)/(x_p-x_w), D=F-W",
+        f"  W = {_fmt(Gf)}*({_fmt(xp)}-{_fmt(xf)})/({_fmt(xp)}-{_fmt(xw)}) = {_fmt(W)} кг/с",
         f"  D = {_fmt(Gf)} - {_fmt(W)} = {_fmt(D)} кг/с",
+        "",
         "БЛОК 2 — Рабочее флегмовое число (Мак-Кэб)",
-        f"  Rmin = (xp-yf*)/(yf*-xf) = {_fmt(Rmin)}; Ropt = {_fmt(R_opt)}; beta={_fmt(B_opt)}",
+        "  y_f* = y_eq(x_f)",
+        f"  y_f* = {_fmt(yf_star)}",
+        "  R_min = (x_p-y_f*)/(y_f*-x_f)",
+        f"  R_min = ({_fmt(xp)}-{_fmt(yf_star)})/({_fmt(yf_star)}-{_fmt(xf)}) = {_fmt(Rmin)}",
+        "  По критерию min N(R+1):",
+        f"  beta_opt = {_fmt(B_opt)}, R_opt = {_fmt(R_opt)}, N_theor = {_fmt(N_opt)}",
+        "",
         "БЛОК 3 — Нагрузки, температуры, плотности",
-        f"  Lv={_fmt(Lv)} кг/с; Ln={_fmt(Ln)} кг/с; Gv={_fmt(Gv)} кг/с; Gn={_fmt(Gn)} кг/с",
-        f"  tв={_fmt(t_liq_v)} °C; tн={_fmt(t_liq_n)} °C; t'в={_fmt(t_vap_v)} °C; t'н={_fmt(t_vap_n)} °C",
+        "  Lв = D*R*Mv/Mp; Lн = D*R*Mn/Mp + F*Mn/MF",
+        f"  Lв={_fmt(Lv)} кг/с; Lн={_fmt(Ln)} кг/с",
+        "  Gв = D*(R+1)*M'в/Mp; Gн = D*(R+1)*M'н/Mp",
+        f"  Gв={_fmt(Gv)} кг/с; Gн={_fmt(Gn)} кг/с",
+        f"  t'в={_fmt(t_vap_v)} °C; t'н={_fmt(t_vap_n)} °C; tв={_fmt(t_liq_v)} °C; tн={_fmt(t_liq_n)} °C",
+        f"  rho_yв={_fmt(rho_yv)}; rho_yн={_fmt(rho_yn)}; rho_xв={_fmt(rho_xv)}; rho_xн={_fmt(rho_xn)} кг/м³",
+        f"  mu_xв={_fmt(mu_xv)}; mu_xн={_fmt(mu_xn)}; mu_yв={_fmt(mu_yv)}; mu_yн={_fmt(mu_yn)} мПа·с",
+        "",
         "БЛОК 4 — Диаметр колонны",
-        f"  d_calc={_fmt(d_calc)} м; d_col={_fmt(d_col)} м; w_work={_fmt(w_work)} м/с",
+        "  w = 0.05*sqrt(rho_x/rho_y)",
+        f"  wв={_fmt(w_v)} м/с; wн={_fmt(w_n)} м/с; w_avg={_fmt(w_avg)} м/с",
+        "  d = sqrt(4*G_avg/(pi*w_avg*rho_avg))",
+        f"  d_calc={_fmt(d_calc)} м; принято d_col={_fmt(d_col)} м",
+        f"  w_work={_fmt(w_work)} м/с; w_tray={_fmt(w_tray)} м/с",
+        "",
         "БЛОК 5 — Параметры тарелки",
-        f"  h0в={_fmt(h0_v)} м; h0н={_fmt(h0_n)} м; epsв={_fmt(eps_v)}; epsн={_fmt(eps_n)}; S={S_int}",
+        "  h0 = 0.787*q^0.2*h_per^0.56*w_t^m*(1-0.31*exp(-0.11*mu_x))*(sigma/sigma_water)^0.09",
+        f"  qв={_fmt(q_v)}; qн={_fmt(q_n)}; m={_fmt(m_exp)}",
+        f"  h0в={_fmt(h0_v)} м; h0н={_fmt(h0_n)} м",
+        "  eps = sqrt(Fr)/(1+sqrt(Fr)), Fr=w_t^2/(g*h0)",
+        f"  epsв={_fmt(eps_v)}; epsн={_fmt(eps_n)}; lt={_fmt(lt)} м; S={S_int}",
+        "",
         "БЛОК 6 — Коэффициенты молекулярной диффузии",
+        "  Dx20 = 1e-6*sqrt(1/M1+1/M2)/(mu*(nu1^(1/3)+nu2^(1/3))^2)",
+        f"  Dx20в={_fmt(Dx20_v)}; Dx20н={_fmt(Dx20_n)}",
+        "  Dx = Dx20*(1+b*(t-20)); Dy = 4.22e-2*T^1.5*sqrt(1/M1+1/M2)/(P*(nu1^(1/3)+nu2^(1/3))^2)",
         f"  Dxв={_fmt(Dx_v)}; Dxн={_fmt(Dx_n)}; Dyв={_fmt(Dy_v)}; Dyн={_fmt(Dy_n)}",
+        "",
         "БЛОК 7 — Коэффициенты массоотдачи",
-        f"  bxfв={_fmt(bxf_v)}; byfв={_fmt(byf_v)}; bxfн={_fmt(bxf_n)}; byfн={_fmt(byf_n)}",
-        "БЛОК 8 — Эффективность по Мэрфри",
-        f"  eв={_fmt(e_v)}; eн={_fmt(e_n)}",
+        "  beta_xf, beta_yf по корреляциям Дытнерского",
+        f"  bxfв={_fmt(bxf_v_ms)} м/с; bxfн={_fmt(bxf_n_ms)} м/с; byfв={_fmt(byf_v_ms)} м/с; byfн={_fmt(byf_n_ms)} м/с",
+        f"  bxfв={_fmt(bxf_v)}; bxfн={_fmt(bxf_n)}; byfв={_fmt(byf_v)}; byfн={_fmt(byf_n)} кмоль/(м²·с)",
+        "",
+        "БЛОК 8 — Эффективность по Мэрфри и кинетическая линия",
+        "  m' = 1.15e-3*(sigma/rho_y)^0.295*((rho_x-rho_y)/mu_y)^0.425",
+        f"  m'в={_fmt(m_prime_v)}; m'н={_fmt(m_prime_n)}; Hcв={_fmt(Hc_v)} м; Hcн={_fmt(Hc_n)} м",
+        f"  eв={_fmt(e_v)}; eн={_fmt(e_n)}; mean(EMy)={_fmt(float(np.mean(EMy_all)))}",
+        "",
         "БЛОК 9 — Число действительных тарелок",
         f"  Nв={N_top}; Nн={N_bot}; N={N_total}",
+        "",
         "БЛОК 10 — Высота колонны",
-        f"  Hк={_fmt(Hk)} м",
+        "  Hк = (N-1)*H_tray + z_top + z_bot",
+        f"  Hк = ({N_total}-1)*{_fmt(H_tray)} + {_fmt(z_top)} + {_fmt(z_bot)} = {_fmt(Hk)} м",
+        "",
         "БЛОК 11 — Гидравлическое сопротивление",
+        "  dPdry = 1.85*w^2*rho/(2*Fc^2), dPliq = g*rho_x*h0, dPsigma = 4*sigma/d0",
+        f"  dPdry={_fmt(dP_dry)} Па; dPliqв={_fmt(dP_liq_v)} Па; dPliqн={_fmt(dP_liq_n)} Па; dPsigma={_fmt(dP_sigma)} Па",
         f"  dPк={_fmt(dP_total)} Па",
-        "БЛОК 9–11 — Сводка",
-        f"  Nв={N_top}; Nн={N_bot}; N={N_total}; Hк={_fmt(Hk)} м; dPк={_fmt(dP_total)} Па",
+        "",
         "БЛОК 12 — Итог",
-        f"  R={_fmt(R_opt)}; Nтеор={_fmt(N_opt)}; Nдейств={N_total}; d={_fmt(d_col)} м",
+        f"  R={_fmt(R_opt)}; N_theor={_fmt(N_opt)}; N_actual={N_total}; d={_fmt(d_col)} м; H={_fmt(Hk)} м; dP={_fmt(dP_total)} Па",
+        "",
         "Графики: plot_NR1.png, plot_yx_mccabe.png, plot_txy.png, plot_entrainment.png, plot_kinetic.png",
     ]
     (output_dir / "report_dytnersky.txt").write_text("\n".join(text_lines) + "\n", encoding="utf-8")
 
     html = f"""<!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><title>Отчет Дытнерского</title>
-<style>body{{font-family:Arial,sans-serif;margin:24px;line-height:1.45}}code{{background:#f2f2f2;padding:2px 5px;border-radius:4px}}</style>
+<style>
+body{{font-family:Arial,sans-serif;margin:24px;line-height:1.45}}
+h2{{margin-top:28px}}
+.eq{{background:#f8f8f8;padding:10px;border-radius:8px}}
+</style>
 <script>window.MathJax={{tex:{{inlineMath:[['$','$'],['\\\\(','\\\\)']]}}}};</script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body>
-<h1>Расчёт тарельчатой ректификационной колонны</h1>
+<h1>Расчёт тарельчатой ректификационной колонны (полный протокол)</h1>
+<p>В отчете приведены формулы, подстановки и комментарии по всем блокам 0–12.</p>
 <h2>Блок 0. Исходные данные</h2>
-<p>F = {_fmt(Gf_kgh)} кг/ч; $x_f^{{mass}}={_fmt(xf_mass)}$, $x_p^{{mass}}={_fmt(xp_mass)}$, $x_w^{{mass}}={_fmt(xw_mass)}$.</p>
+<div class="eq"><p>$F={_fmt(Gf_kgh)}\\;\\text{{кг/ч}}={_fmt(Gf)}\\;\\text{{кг/с}}$</p>
+<p>$x_f^{{mass}}={_fmt(xf_mass)},\\;x_p^{{mass}}={_fmt(xp_mass)},\\;x_w^{{mass}}={_fmt(xw_mass)}$</p></div>
 <h2>Блок 1. Материальный баланс</h2>
-<p>$W = F\\frac{{x_p-x_f}}{{x_p-x_w}},\\ D = F-W$</p>
-<p>$W={_fmt(Gf)}\\cdot\\frac{{{_fmt(xp)}-{_fmt(xf)}}}{{{_fmt(xp)}-{_fmt(xw)}}}={_fmt(W)}$ кг/с; $D={_fmt(D)}$ кг/с</p>
-<h2>Блок 2. Выбор флегмового числа</h2>
-<p>$R_{{min}}=\\frac{{x_p-y_f^*}}{{y_f^*-x_f}}={_fmt(Rmin)}$, $R={_fmt(R_opt)}$</p>
-<h2>Блок 3. Нагрузки и свойства</h2>
-<p>$L_в={_fmt(Lv)}$, $L_н={_fmt(Ln)}$, $G_в={_fmt(Gv)}$, $G_н={_fmt(Gn)}$ кг/с.</p>
+<div class="eq"><p>$x=\\frac{{x^{{mass}}/M_1}}{{x^{{mass}}/M_1+(1-x^{{mass}})/M_2}}$</p>
+<p>$x_f={_fmt(xf)},\\;x_p={_fmt(xp)},\\;x_w={_fmt(xw)}$</p>
+<p>$W=F\\frac{{x_p-x_f}}{{x_p-x_w}}={_fmt(W)}\\;\\text{{кг/с}},\\quad D=F-W={_fmt(D)}\\;\\text{{кг/с}}$</p></div>
+<h2>Блок 2. Флегмовое число</h2>
+<div class="eq"><p>$R_{{min}}=\\frac{{x_p-y_f^*}}{{y_f^*-x_f}}={_fmt(Rmin)}$</p>
+<p>$\\beta_{{opt}}={_fmt(B_opt)},\\quad R=\\beta_{{opt}}R_{{min}}={_fmt(R_opt)},\\quad N_{{theor}}={_fmt(N_opt)}$</p></div>
+<h2>Блок 3. Нагрузки, температуры, свойства</h2>
+<div class="eq"><p>$L_в={_fmt(Lv)},\\;L_н={_fmt(Ln)},\\;G_в={_fmt(Gv)},\\;G_н={_fmt(Gn)}\\;\\text{{кг/с}}$</p>
+<p>$t'_в={_fmt(t_vap_v)}^\\circ C,\\;t'_н={_fmt(t_vap_n)}^\\circ C,\\;t_в={_fmt(t_liq_v)}^\\circ C,\\;t_н={_fmt(t_liq_n)}^\\circ C$</p>
+<p>$\\rho_{{y,в}}={_fmt(rho_yv)},\\;\\rho_{{y,н}}={_fmt(rho_yn)},\\;\\rho_{{x,в}}={_fmt(rho_xv)},\\;\\rho_{{x,н}}={_fmt(rho_xn)}$</p></div>
 <h2>Блок 4. Диаметр</h2>
-<p>$d=\\sqrt{{\\frac{{4\\bar{{G}}}}{{\\pi\\bar{{w}}\\bar{{\\rho}}}}}}={_fmt(d_calc)}$ м; принято $d={_fmt(d_col)}$ м</p>
+<div class="eq"><p>$w=0.05\\sqrt{{\\rho_x/\\rho_y}}$</p>
+<p>$d=\\sqrt{{\\frac{{4\\bar G}}{{\\pi\\bar w\\bar\\rho}}}}={_fmt(d_calc)}\\;\\text{{м}},\\;d_{{прин}}={_fmt(d_col)}\\;\\text{{м}}$</p></div>
 <h2>Блок 5. Параметры тарелки</h2>
-<p>$h_0^в={_fmt(h0_v)}$ м, $h_0^н={_fmt(h0_n)}$ м, $\\varepsilon_в={_fmt(eps_v)}$, $\\varepsilon_н={_fmt(eps_n)}$.</p>
-<h2>Блок 6–8. Массообмен</h2>
-<p>$D_x^в={_fmt(Dx_v)}$, $D_x^н={_fmt(Dx_n)}$, $D_y^в={_fmt(Dy_v)}$, $D_y^н={_fmt(Dy_n)}$.</p>
-<p>$e_в={_fmt(e_v)}$, $e_н={_fmt(e_n)}$.</p>
-<h2>Блок 9–11. Итог</h2>
-<p>$N_в={N_top}$, $N_н={N_bot}$, $N={N_total}$, $H_к={_fmt(Hk)}$ м, $\\Delta P_к={_fmt(dP_total)}$ Па</p>
-<h2>Файлы графиков</h2>
+<div class="eq"><p>$h_0=0.787q^{{0.2}}h_{{per}}^{{0.56}}w_t^m(1-0.31e^{{-0.11\\mu_x}})(\\sigma/\\sigma_w)^{{0.09}}$</p>
+<p>$h_0^в={_fmt(h0_v)},\\;h_0^н={_fmt(h0_n)},\\;\\varepsilon_в={_fmt(eps_v)},\\;\\varepsilon_н={_fmt(eps_n)}$</p></div>
+<h2>Блок 6. Молекулярная диффузия</h2>
+<div class="eq"><p>$D_x^в={_fmt(Dx_v)},\\;D_x^н={_fmt(Dx_n)},\\;D_y^в={_fmt(Dy_v)},\\;D_y^н={_fmt(Dy_n)}$</p></div>
+<h2>Блок 7. Массоотдача</h2>
+<div class="eq"><p>$\\beta_{{xf,в}}={_fmt(bxf_v_ms)},\\;\\beta_{{xf,н}}={_fmt(bxf_n_ms)},\\;\\beta_{{yf,в}}={_fmt(byf_v_ms)},\\;\\beta_{{yf,н}}={_fmt(byf_n_ms)}\\;\\text{{м/с}}$</p>
+<p>$\\beta_{{xf,в}}={_fmt(bxf_v)},\\;\\beta_{{xf,н}}={_fmt(bxf_n)},\\;\\beta_{{yf,в}}={_fmt(byf_v)},\\;\\beta_{{yf,н}}={_fmt(byf_n)}\\;\\text{{кмоль/(м²·с)}}$</p></div>
+<h2>Блок 8. Эффективность и кинетическая линия</h2>
+<div class="eq"><p>$m'_в={_fmt(m_prime_v)},\\;m'_н={_fmt(m_prime_n)},\\;e_в={_fmt(e_v)},\\;e_н={_fmt(e_n)}$</p>
+<p>$\\overline{{E_{{My}}}}={_fmt(float(np.mean(EMy_all)))}$</p></div>
+<h2>Блок 9. Действительные тарелки</h2>
+<div class="eq"><p>$N_в={N_top},\\;N_н={N_bot},\\;N={N_total}$</p></div>
+<h2>Блок 10. Высота колонны</h2>
+<div class="eq"><p>$H_к=(N-1)H+z_{{top}}+z_{{bot}}=({_fmt(N_total)}-1)\\cdot{_fmt(H_tray)}+{_fmt(z_top)}+{_fmt(z_bot)}={_fmt(Hk)}\\;\\text{{м}}$</p></div>
+<h2>Блок 11. Гидросопротивление</h2>
+<div class="eq"><p>$\\Delta P_{{dry}}={_fmt(dP_dry)},\\;\\Delta P_{{liq,в}}={_fmt(dP_liq_v)},\\;\\Delta P_{{liq,н}}={_fmt(dP_liq_n)},\\;\\Delta P_\\sigma={_fmt(dP_sigma)}\\;\\text{{Па}}$</p>
+<p>$\\Delta P_к={_fmt(dP_total)}\\;\\text{{Па}}$</p></div>
+<h2>Блок 12. Итог</h2>
+<div class="eq"><p>$R={_fmt(R_opt)},\\;N_{{theor}}={_fmt(N_opt)},\\;N_{{actual}}={N_total},\\;d={_fmt(d_col)}\\;\\text{{м}},\\;H={_fmt(Hk)}\\;\\text{{м}}$</p></div>
+<h2>Графики</h2>
 <ul><li>plot_NR1.png</li><li>plot_yx_mccabe.png</li><li>plot_txy.png</li><li>plot_entrainment.png</li><li>plot_kinetic.png</li></ul>
 </body></html>"""
     (output_dir / "report_dytnersky.html").write_text(html, encoding="utf-8")
